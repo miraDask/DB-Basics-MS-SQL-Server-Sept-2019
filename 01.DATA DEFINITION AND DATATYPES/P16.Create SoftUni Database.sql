@@ -26,7 +26,6 @@ CREATE TABLE Employees (
 	FOREIGN KEY REFERENCES Departments(Id), 
 	HireDate DATE NOT NULL, 
 	Salary DECIMAL(7,2), 
-	AddressId INT NOT NULL
-	FOREIGN KEY REFERENCES Addresses(Id)
+	AddressId INT FOREIGN KEY REFERENCES Addresses(Id)
 )
 
