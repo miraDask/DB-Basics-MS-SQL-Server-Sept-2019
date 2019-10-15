@@ -1,72 +1,67 @@
-DECLARE @firstItemsGroupStartId INT = 11
-DECLARE @firstItemsGroupFinalId INT = 12
-DECLARE @secondItemsGroupStartId INT = 19
-DECLARE @secondItemsGroupFinalId INT = 21
+DECLARE @firstItemsGroupStartLevel INT = 11
+DECLARE @firstItemsGroupFinalLevel INT = 12
+DECLARE @secondItemsGroupStartLevel INT = 19
+DECLARE @secondItemsGroupFinalLevel INT = 21
 DECLARE @userGameId INT = ( SELECT ug.Id
                             FROM Users AS u
 						    JOIN UsersGames AS ug ON ug.UserId = u.Id
 							JOIN Games AS g ON g.Id  = ug.GameId
 						   WHERE u.Username = 'Stamat' AND g.[Name] = 'Safflower')  
 
-DECLARE @userCash MONEY = ( SELECT ug.Cash
-                            FROM Users AS u
-						    JOIN UsersGames AS ug ON ug.UserId = u.Id
-							JOIN Games AS g ON g.Id  = ug.GameId
-						   WHERE u.Username = 'Stamat' AND g.[Name] = 'Safflower')
-DECLARE @itemPrice MONEY
+DECLARE @userCash MONEY 
+DECLARE @itemsPrice MONEY
+DECLARE @itemId INT
 
   BEGIN TRANSACTION
-        WHILE (@firstItemsGroupStartId <= @firstItemsGroupFinalId)
-		BEGIN
-
-		     SET @itemPrice = (SELECT i.Price
+		     SET @itemsPrice = (SELECT SUM(i.Price)
 		                         FROM Items AS i
-				     		    WHERE i.Id = @firstItemsGroupStartId)
+				     		    WHERE i.MinLevel BETWEEN @firstItemsGroupStartLevel AND @firstItemsGroupFinalLevel)
 
-		      IF(@itemPrice <= @userCash)
+			 SET  @userCash = ( SELECT ug.Cash
+                                  FROM Users AS u
+						          JOIN UsersGames AS ug ON ug.UserId = u.Id
+							      JOIN Games AS g ON g.Id  = ug.GameId
+						         WHERE u.Username = 'Stamat' AND g.[Name] = 'Safflower')
+
+
+		      IF(@itemsPrice <= @userCash)
 			  BEGIN
 		            INSERT INTO UserGameItems (ItemId, UserGameId) 
-			        VALUES (@firstItemsGroupStartId, @userGameId)
+			        SELECT i.Id,
+					       @userGameId
+					  FROM Items AS i
+					 WHERE i.MinLevel BETWEEN @firstItemsGroupStartLevel AND @firstItemsGroupFinalLevel
 
 		            UPDATE UsersGames
-			           SET Cash -= @itemPrice
+			           SET Cash -= @itemsPrice
 			         WHERE Id = @userGameId 
 			 END
-			ELSE
-		   BEGIN
-                 ROLLBACK
-				 RAISERROR('Not enough cash', 16, 1)
-				 RETURN
-			END
-			SET @firstItemsGroupStartId += 1
-		END	
      COMMIT
   
-  BEGIN TRANSACTION
-        WHILE (@secondItemsGroupStartId <= @secondItemsGroupFinalId)
-		BEGIN
+   BEGIN TRANSACTION
+		     SET @itemsPrice = (SELECT SUM(i.Price)
+		                         FROM Items AS i
+				     		    WHERE i.MinLevel BETWEEN @secondItemsGroupStartLevel AND @secondItemsGroupFinalLevel)
 
-		     SET @itemPrice = (SELECT i.Price
-		                      FROM Items AS i
-				     		 WHERE i.Id = @secondItemsGroupStartId)
+			 SET  @userCash = ( SELECT ug.Cash
+                                  FROM Users AS u
+						          JOIN UsersGames AS ug ON ug.UserId = u.Id
+							      JOIN Games AS g ON g.Id  = ug.GameId
+						         WHERE u.Username = 'Stamat' AND g.[Name] = 'Safflower')
 
-		      IF(@itemPrice <= @userCash)
+
+		      IF(@itemsPrice <= @userCash)
 			  BEGIN
 		            INSERT INTO UserGameItems (ItemId, UserGameId) 
-			        VALUES (@secondItemsGroupStartId, @userGameId)
+			        SELECT i.Id,
+					       @userGameId
+					  FROM Items AS i
+					 WHERE i.MinLevel BETWEEN @secondItemsGroupStartLevel AND @secondItemsGroupFinalLevel
 
 		            UPDATE UsersGames
-			           SET Cash -= @itemPrice
+			           SET Cash -= @itemsPrice
 			         WHERE Id = @userGameId 
 			 END
-			ELSE
-		   BEGIN
-                 ROLLBACK
-				 RAISERROR('Not enough cash', 16, 1)
-				 RETURN
-			END
-		    SET @secondItemsGroupStartId += 1
-		END	
      COMMIT
 
     SELECT i.[Name]
