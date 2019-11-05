@@ -1,20 +1,21 @@
-   SELECT CASE
-             WHEN e.FirstName IS NULL
-			 THEN 'None'
-			 ELSE CONCAT(e.FirstName, ' ', e.LastName) 
-		  END AS Employee,
-          d.[Name] AS Department,
-		  c.[Name] AS Category,
-		  r.[Description],
-		  FORMAT(r.OpenDate, 'dd.MM.yyyy') AS OpenDate,
-		  s.Label AS [Status],
-		  u.[Name] AS [User]
+   SELECT ISNULL(e.FirstName + ' ' + e.LastName,'None' ) AS Employee,
+          ISNULL(d.[Name], 'None') AS Department,
+		  ISNULL(c.[Name], 'None') AS Category,
+		  ISNULL(r.[Description], 'None') AS [Description],
+		  ISNULL(FORMAT(r.OpenDate, 'dd.MM.yyyy'), 'None') AS OpenDate,
+		  ISNULL(s.Label, 'None') AS [Status],
+		  ISNULL(u.[Name],'None') AS [User]
      FROM Reports AS r
 LEFT JOIN Employees AS e ON e.Id = r.EmployeeId
+LEFT JOIN Departments AS d ON d.Id = e.DepartmentId
 LEFT JOIN Categories AS c ON c.Id = r.CategoryId
-LEFT JOIN Departments AS d ON d.Id = c.DepartmentId
 LEFT JOIN Users AS u ON u.Id = r.UserId
 LEFT JOIN [Status] AS s ON s.Id = r.StatusId
- ORDER BY e.FirstName DESC, 
+ ORDER BY e.FirstName DESC,
           e.LastName DESC,
-		  Department, Category, r.[Description], OpenDate, [Status], [User]
+		  d.[Name],
+		  c.[Name],
+		  r.[Description],
+		  r.OpenDate,
+		  s.Label,
+		  u.[Name]
